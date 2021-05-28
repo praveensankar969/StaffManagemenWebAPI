@@ -25,6 +25,8 @@ namespace StaffManagement.Controllers
         public async Task<ActionResult<Staff>> GetStaff(int id){
             return await _context.Staffs.FindAsync(id);
         }
+
         
+
     }
 }
