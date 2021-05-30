@@ -8,5 +8,7 @@ namespace StaffManagement.Models{
         }
 
         public DbSet<Staff> Staffs{get ;set;}
+        public DbSet<Teacher> Teachers{get ;set;}
+        
     }
 }

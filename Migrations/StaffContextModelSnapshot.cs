@@ -43,6 +43,35 @@ namespace StaffManagement.Migrations
 
                     b.ToTable("Staffs");
                 });
+
+            modelBuilder.Entity("StaffManagement.Models.Teacher", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("DateOfJoining")
+                        .HasColumnType("TEXT");
+
+                    b.Property<int>("Experience")
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Password")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("Subject")
+                        .HasColumnType("TEXT");
+
+                    b.Property<string>("UserName")
+                        .HasColumnType("TEXT");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Teachers");
+                });
 #pragma warning restore 612, 618
         }
     }
