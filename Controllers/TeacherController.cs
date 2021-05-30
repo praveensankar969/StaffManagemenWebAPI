@@ -12,38 +12,38 @@ namespace StaffManagement.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class StaffController : ControllerBase
+    public class TeacherController : ControllerBase
     {
         private readonly StaffContext _context;
 
-        public StaffController(StaffContext context)
+        public TeacherController(StaffContext context)
         {
             _context = context;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Staff>>> GetAllStaff()
+        public async Task<ActionResult<IEnumerable<Teacher>>> GetAllStaff()
         {
-            return await _context.Staffs.ToListAsync();
+            return await _context.Teachers.ToListAsync();
         }
         [HttpGet("{id}")]
-        public async Task<ActionResult<Staff>> GetStaff(int id)
+        public async Task<ActionResult<Teacher>> GetStaff(int id)
         {
-            return await _context.Staffs.FindAsync(id);
+            return await _context.Teachers.FindAsync(id);
         }
 
         [HttpPost("addStaff")]
-        public async Task<ActionResult<string>> AddStaffDetails(Staff userDetail)
+        public async Task<ActionResult<string>> AddStaffDetails(Teacher userDetail)
         {
-            _context.Staffs.Add(userDetail);
+            _context.Teachers.Add(userDetail);
             await _context.SaveChangesAsync();
             return "Data add Suceess";
         }
 
         [HttpPatch("{id}")]
-        public async Task<ActionResult<string>> UpdateStaffDetail(StaffUpdateDTO staffDTO)
+        public async Task<ActionResult<string>> UpdateStaffDetail(TeacherUpdateDTO staffDTO)
         {
-            var staff = await _context.Staffs.FindAsync(staffDTO.Id);
+            var staff = await _context.Teachers.FindAsync(staffDTO.Id);
             if (staff == null)
             {
                 return BadRequest();
@@ -93,12 +93,12 @@ namespace StaffManagement.Controllers
         [HttpDelete("{id}")]
         public async Task<ActionResult<string>> DeleteStaff(int id)
         {
-            var staff = await _context.Staffs.FindAsync(id);
+            var staff = await _context.Teachers.FindAsync(id);
             if (staff == null)
             {
                 return BadRequest("No such ID");
             }
-            _context.Staffs.Remove(staff);
+            _context.Teachers.Remove(staff);
             await _context.SaveChangesAsync();
             return "Delete success";
 
