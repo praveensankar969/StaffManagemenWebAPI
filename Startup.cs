@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
+using API.Services;
 using Microsoft.AspNetCore.Authentication.Certificate;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -12,6 +15,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using StaffManagement.Models;
 
@@ -36,7 +40,18 @@ namespace StaffManagement
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "StaffManagement", Version = "v1" });
             });
             services.AddDbContext<StaffContext>(options => options.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
-            services.AddAuthentication(CertificateAuthenticationDefaults.AuthenticationScheme).AddCertificate().AddCertificateCache();
+            services.AddCors(options => {options.AddPolicy("Policy1", builder => builder.WithOrigins("http://localhost:4200").AllowAnyHeader().AllowAnyMethod());});
+             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["TokenKey"]));
+            services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+            .AddJwtBearer( opt=>{
+                opt.TokenValidationParameters = new TokenValidationParameters{
+                    ValidateIssuerSigningKey = true,
+                    IssuerSigningKey = key,
+                    ValidateAudience = false,
+                    ValidateIssuer = false
+                };
+            });
+            services.AddScoped<TokenService>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -53,6 +68,8 @@ namespace StaffManagement
             app.UseHttpsRedirection();
 
             app.UseRouting();
+
+            app.UseCors("Policy1");
 
             app.UseAuthorization();
 
