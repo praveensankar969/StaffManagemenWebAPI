@@ -60,7 +60,7 @@ namespace StaffManagement.Controllers
             }
             else
             {
-                return BadRequest("No Such Staff");
+                return NotFound("No Such Staff");
             }
 
         }
