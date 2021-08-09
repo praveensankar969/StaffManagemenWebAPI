@@ -1,107 +1,117 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using System;
 using StaffManagement.Models;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Http;
-using System.Reflection;
 using StaffManagement.DTO;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using API.Services;
+using Procedure;
+using Microsoft.Extensions.Configuration;
 
 namespace StaffManagement.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize]
     public class StaffController : ControllerBase
     {
         private readonly StaffContext _context;
+        private readonly IHttpContextAccessor _httpContext;
+        private readonly TokenService _tokenService;
+        private readonly IConfiguration _config;
 
-        public StaffController(StaffContext context)
+        public StaffController(StaffContext context, IHttpContextAccessor httpContext, TokenService tokenService, IConfiguration config)
         {
-            _context = context;
+            this._config = config;
+            this._tokenService = tokenService;
+            this._httpContext = httpContext;
+            this._context = context;
         }
 
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Staff>>> GetAllStaff()
+        public async Task<ActionResult<List<Staff>>> GetAllStaff()
         {
-            return await _context.Staffs.ToListAsync();
+            var user = this._httpContext.HttpContext.User.FindFirstValue(ClaimTypes.Name);
+            var userPrivilege = this._httpContext.HttpContext.User.FindFirstValue("Type");
+            if (user == null || !userPrivilege.Equals("Admin"))
+            {
+                return Unauthorized();
+            }
+            SQLProcedure pro = new SQLProcedure(this._config);
+            return await pro.GetAllData();
         }
+
         [HttpGet("{id}")]
         public async Task<ActionResult<Staff>> GetStaff(int id)
         {
-            return await _context.Staffs.FindAsync(id);
-        }
+            var user = this._httpContext.HttpContext.User.FindFirstValue(ClaimTypes.Name);
 
-        [HttpPost("addStaff")]
-        public async Task<ActionResult<string>> AddStaffDetails(Staff userDetail)
-        {
-            _context.Staffs.Add(userDetail);
-            await _context.SaveChangesAsync();
-            return "Data add Suceess";
-        }
-
-        [HttpPatch("{id}")]
-        public async Task<ActionResult<string>> UpdateStaffDetail(StaffUpdateDTO staffDTO)
-        {
-            var staff = await _context.Staffs.FindAsync(staffDTO.Id);
-            if (staff == null)
+            if (user == null)
             {
-                return BadRequest();
+                return Unauthorized();
             }
-            switch (staffDTO.Property)
+            SQLProcedure pro = new SQLProcedure(this._config);
+            var staff = await pro.GetDataOfId(id);
+            if (staff != null)
             {
-                case "Username":
-                    {
-                        staff.UserName = staffDTO.PropertyValue;
-                        break;
-                    }
-                case "Password":
-                    {
-                        staff.Password = staffDTO.PropertyValue;
-                        break;
-                    }
-                case "Subject":
-                    {
-                        staff.Subject = staffDTO.PropertyValue;
-                        break;
-                    }
-                case "Experience":
-                    {
-                        staff.Experience = Convert.ToInt32(staffDTO.PropertyValue);
-                        break;
-                    }
-                case "Phone":
-                    {
-                        staff.PhoneNumber = staffDTO.PropertyValue;
-                        break;
-                    }
-                case "Date of Joining":
-                    {
-                        staff.DateOfJoining = staffDTO.PropertyValue;
-                        break;
-                    }
-                default:
-                    {
-                        break;
-                    }
+                return staff;
+            }
+            else
+            {
+                return BadRequest("No Such Staff");
             }
 
-            await _context.SaveChangesAsync();
-            return "Update Success";
+        }
+
+        [AllowAnonymous]
+        [HttpPost("addstaff")]
+        public async Task<ActionResult<string>> AddStaffDetails(StaffUpdateDTO staff)
+        {
+
+            SQLProcedure pro = new SQLProcedure(this._config);
+            int res = await pro.Insert(staff);
+
+            return Ok("Data added");
+
+        }
+
+        [HttpPut("{id}")]
+        public async Task<ActionResult<string>> UpdateStaffDetail(int id, StaffUpdateDTO staffDTO)
+        {
+            var user = this._httpContext.HttpContext.User.FindFirstValue(ClaimTypes.Name);
+
+            if (user == null)
+            {
+                return Unauthorized();
+            }
+            SQLProcedure pro = new SQLProcedure(this._config);
+            var staff = await pro.GetDataOfId(id);
+            if (staff != null)
+            {
+                await pro.Update(id, staffDTO);
+
+                return Ok("Update Success");
+            }
+            else
+            {
+                return BadRequest("No Such Staff");
+            }
         }
 
         [HttpDelete("{id}")]
         public async Task<ActionResult<string>> DeleteStaff(int id)
         {
-            var staff = await _context.Staffs.FindAsync(id);
-            if (staff == null)
+            var user = this._httpContext.HttpContext.User.FindFirstValue(ClaimTypes.Name);
+            var userPrivilege = this._httpContext.HttpContext.User.FindFirstValue("Type");
+            if (user == null || !userPrivilege.Equals("Admin"))
             {
-                return BadRequest("No such ID");
+                return Unauthorized();
             }
-            _context.Staffs.Remove(staff);
-            await _context.SaveChangesAsync();
-            return "Delete success";
-
+            SQLProcedure pro = new SQLProcedure(this._config);
+            await pro.DeleteDataOfId(id);
+            return Ok("Delete success");
         }
 
     }

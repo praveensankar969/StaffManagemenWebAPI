@@ -1,22 +1,17 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using API.Services;
-using Microsoft.AspNetCore.Authentication.Certificate;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using Procedure;
 using StaffManagement.Models;
 
 namespace StaffManagement
@@ -39,9 +34,11 @@ namespace StaffManagement
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "StaffManagement", Version = "v1" });
             });
-            services.AddDbContext<StaffContext>(options => options.UseSqlite(Configuration.GetConnectionString("DefaultConnection")));
-            services.AddCors(options => {options.AddPolicy("Policy1", builder => builder.WithOrigins("http://localhost:4200").AllowAnyHeader().AllowAnyMethod());});
+            //services.AddDbContext<StaffContext>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
+            services.AddDbContext<StaffContext>(ServiceLifetime.Scoped);
+            services.AddCors(options => {options.AddPolicy("Policy1", builder => builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod());});
              var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(Configuration["TokenKey"]));
+            
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer( opt=>{
                 opt.TokenValidationParameters = new TokenValidationParameters{
@@ -51,7 +48,15 @@ namespace StaffManagement
                     ValidateIssuer = false
                 };
             });
+
+             services.AddControllers(opt=>{
+                var policy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+                opt.Filters.Add(new AuthorizeFilter(policy));
+            });
+            
             services.AddScoped<TokenService>();
+            services.AddScoped<SQLProcedure>();
+            services.AddHttpContextAccessor();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -70,6 +75,8 @@ namespace StaffManagement
             app.UseRouting();
 
             app.UseCors("Policy1");
+
+            app.UseAuthentication();
 
             app.UseAuthorization();
 

@@ -10,17 +10,18 @@ using StaffManagement.Interface;
 
 namespace API.Services{
 
-    public class TokenService : ITokenInterface{
+    public class TokenService{
         private readonly SymmetricSecurityKey _key;
         public TokenService(IConfiguration config)
         {
             _key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(config["TokenKey"]));
         }
 
-        public string CreateToken(LogonDTO user){
+        public string CreateToken(TokenDTO user){
 
             var claims = new List<Claim>{
-                new Claim(JwtRegisteredClaimNames.NameId, user.UserName)
+                new Claim(ClaimTypes.Name, user.UserName),
+                new Claim("Type", user.Type)
             };
            
             var creds = new SigningCredentials(_key, SecurityAlgorithms.HmacSha512Signature);
