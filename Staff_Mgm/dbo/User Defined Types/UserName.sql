@@ -1,0 +1,3 @@
+﻿CREATE TYPE [dbo].[UserName]
+    FROM VARCHAR (25) NOT NULL;
+

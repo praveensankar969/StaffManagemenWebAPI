@@ -1,0 +1,9 @@
+﻿CREATE PROCEDURE DeleteWithId @Id INTEGER
+AS
+BEGIN
+	SET NOCOUNT ON;
+
+	DELETE
+	FROM customers
+	WHERE Id = @Id
+END

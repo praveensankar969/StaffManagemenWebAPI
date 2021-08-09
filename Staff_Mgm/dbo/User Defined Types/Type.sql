@@ -1,0 +1,3 @@
+﻿CREATE TYPE [dbo].[Type]
+    FROM VARCHAR (15) NULL;
+
